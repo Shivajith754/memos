@@ -1,3 +1,4 @@
+import { ROUTES } from "@/router/routes";
 import { Attachment, MotionMediaFamily, MotionMediaRole } from "@/types/proto/api/v1/attachment_service_pb";
 
 export const getAttachmentUrl = (attachment: Attachment) => {
@@ -9,7 +10,29 @@ export const getAttachmentUrl = (attachment: Attachment) => {
 };
 
 export const getAttachmentThumbnailUrl = (attachment: Attachment) => {
-  return `${window.location.origin}/file/${attachment.name}/${attachment.filename}?thumbnail=true`;
+  const searchParams = new URLSearchParams({ thumbnail: "true" });
+  let shareToken: string | null = null;
+
+  if (attachment.externalLink) {
+    try {
+      const externalUrl = new URL(attachment.externalLink, window.location.origin);
+      if (externalUrl.origin === window.location.origin && externalUrl.pathname.startsWith("/file/")) {
+        shareToken = externalUrl.searchParams.get("share_token");
+      }
+    } catch {
+      // Ignore malformed external links and fall back to the current route.
+    }
+  }
+
+  const sharedMemoPrefix = `${ROUTES.SHARED_MEMO}/`;
+  if (!shareToken && window.location.pathname.startsWith(sharedMemoPrefix)) {
+    shareToken = window.location.pathname.slice(sharedMemoPrefix.length).split("/")[0] || null;
+  }
+  if (shareToken) {
+    searchParams.set("share_token", shareToken);
+  }
+
+  return `${window.location.origin}/file/${attachment.name}/${attachment.filename}?${searchParams.toString()}`;
 };
 
 export const getAttachmentMotionClipUrl = (attachment: Attachment) => {
