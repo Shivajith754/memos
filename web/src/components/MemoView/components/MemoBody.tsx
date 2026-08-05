@@ -1,4 +1,5 @@
 import { EyeIcon } from "lucide-react";
+import { useMemo } from "react";
 import ClampedSection from "@/components/ClampedSection";
 import { AttachmentListView, LocationDisplayView, RelationListView } from "@/components/MemoMetadata";
 import { isReferenceRelation } from "@/components/MemoMetadata/Relation/relationHelpers";
@@ -10,6 +11,17 @@ import { MemoReactionListView } from "../../MemoReactionListView";
 import { useMemoHandlers } from "../hooks";
 import { useMemoViewContext } from "../MemoViewContext";
 import type { MemoBodyProps } from "../types";
+
+// Update timestamps have second-level precision, so an immediate content update can
+// keep the same timestamp as creation. Use the content revision to refresh task markup.
+const getContentRevision = (content: string) => {
+  let hash = 2166136261;
+  for (let index = 0; index < content.length; index++) {
+    hash ^= content.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${content.length}-${hash >>> 0}`;
+};
 
 const BlurOverlay: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
   const t = useTranslate();
@@ -35,6 +47,7 @@ const MemoBody: React.FC<MemoBodyProps> = ({ compact }) => {
   const { handleMemoContentClick, handleMemoContentDoubleClick } = useMemoHandlers({ readonly, openEditor, openPreview });
 
   const referencedMemos = memo.relations.filter(isReferenceRelation);
+  const contentRevision = useMemo(() => getContentRevision(memo.content), [memo.content]);
 
   return (
     <>
@@ -48,6 +61,7 @@ const MemoBody: React.FC<MemoBodyProps> = ({ compact }) => {
             Reactions stay outside so they never hide under the fade. */}
         <ClampedSection enabled={Boolean(compact)}>
           <MemoContent
+            key={`${memo.name}-${contentRevision}`}
             memoName={memo.name}
             content={memo.content}
             onClick={handleMemoContentClick}
