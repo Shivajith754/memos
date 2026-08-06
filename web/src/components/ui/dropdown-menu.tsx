@@ -16,15 +16,16 @@ const DropdownMenuTrigger = React.forwardRef<HTMLButtonElement, DropdownMenuPrim
 DropdownMenuTrigger.displayName = "DropdownMenuTrigger";
 
 type DropdownMenuContentProps = DropdownMenuPrimitive.Popup.Props &
-  Pick<DropdownMenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">;
+  Pick<DropdownMenuPrimitive.Positioner.Props, "align" | "alignOffset" | "positionMethod" | "side" | "sideOffset">;
 
 const DropdownMenuContent = React.forwardRef<HTMLDivElement, DropdownMenuContentProps>(
-  ({ className, align, alignOffset, side, sideOffset = 4, ...props }, ref) => {
+  ({ className, align, alignOffset, positionMethod, side, sideOffset = 4, ...props }, ref) => {
     return (
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Positioner
           align={align}
           alignOffset={alignOffset}
+          positionMethod={positionMethod}
           side={side}
           sideOffset={sideOffset}
           className="isolate z-dropdown outline-none"

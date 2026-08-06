@@ -137,14 +137,20 @@ export function extractHeadings(markdown: string): HeadingItem[] {
 }
 
 interface MdastNode {
+  type?: string;
   value?: string;
   children?: MdastNode[];
 }
 
 function getNodeText(node: MdastNode): string {
+  if (node.type === "html") return stripHtmlTags(node.value ?? "");
   if (node.value) return node.value;
   if (node.children) return node.children.map(getNodeText).join("");
   return "";
+}
+
+function stripHtmlTags(value: string): string {
+  return value.replace(/<!--[\s\S]*?-->/g, "").replace(/<[^>]*>/g, "");
 }
 
 export function extractTasks(markdown: string): TaskItem[] {

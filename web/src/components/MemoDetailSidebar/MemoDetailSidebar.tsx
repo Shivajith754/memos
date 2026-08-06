@@ -122,7 +122,7 @@ const MemoDetailSidebar = ({ memo, className, onShareImageOpen, forceReadonly = 
             <span className="min-w-0 flex-1 truncate text-left">{t("common.share")}</span>
             <ChevronDownIcon className="size-3.5 shrink-0 opacity-55" strokeWidth={1.8} />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" sideOffset={4} className="w-48">
+          <DropdownMenuContent align="start" positionMethod="fixed" sideOffset={4} className="w-48">
             <DropdownMenuItem onClick={handleCopyLink}>
               <LinkIcon />
               {t("memo.copy-link")}

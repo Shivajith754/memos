@@ -93,6 +93,12 @@ describe("MemoDetailSidebar", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "common.share" }));
+    await waitFor(() => {
+      const sharePopup = document.querySelector('[data-slot="dropdown-menu-content"]');
+      const positioner = sharePopup?.parentElement;
+      expect(positioner).not.toBeNull();
+      expect(positioner).toHaveStyle({ position: "fixed" });
+    });
     fireEvent.click(await screen.findByRole("menuitem", { name: "memo.copy-link" }));
     expect(copyToClipboard).toHaveBeenCalledWith("https://memos.example/memos/detail");
 
