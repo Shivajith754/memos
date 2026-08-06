@@ -1,5 +1,5 @@
 import { HashIcon, ListIcon, ListTreeIcon } from "lucide-react";
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useEffect, useMemo, useState } from "react";
 import { useMemoFilterContext } from "@/contexts/MemoFilterContext";
 import { useLocalStorage, useOverflowTitle } from "@/hooks";
 import { cn } from "@/lib/utils";
@@ -58,13 +58,51 @@ const FlatTagRow = ({ tag, amount, active, onClick }: FlatTagRowProps) => {
   );
 };
 
+const getExpandableTagPaths = (tags: [tag: string, amount: number][]) => {
+  const paths = new Set<string>();
+
+  for (const [tag] of tags) {
+    const segments = tag.split("/");
+    for (let index = 1; index < segments.length; index++) {
+      paths.add(segments.slice(0, index).join("/"));
+    }
+  }
+
+  return paths;
+};
+
+const getParentTagPaths = (tag: string) => {
+  const segments = tag.split("/");
+  return segments.slice(0, -1).map((_, index) => segments.slice(0, index + 1).join("/"));
+};
+
 const TagsSection = ({ tagCount, onSelect }: Props) => {
   const t = useTranslate();
   const { getFiltersByFactor, addFilter, removeFilter } = useMemoFilterContext();
   const [treeMode, setTreeMode] = useLocalStorage<boolean>("tag-view-as-tree", false);
+  const [expandedTagPaths, setExpandedTagPaths] = useState<Set<string>>(() => new Set());
   const activeTags = new Set(getFiltersByFactor("tagSearch").map((filter) => filter.value));
   const activeTag = activeTags.values().next().value as string | undefined;
   const tags = useMemo(() => Object.entries(tagCount).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])), [tagCount]);
+  const expandableTagPaths = useMemo(() => getExpandableTagPaths(tags), [tags]);
+
+  useEffect(() => {
+    setExpandedTagPaths((current) => {
+      const next = new Set(Array.from(current).filter((path) => expandableTagPaths.has(path)));
+      return next.size === current.size ? current : next;
+    });
+  }, [expandableTagPaths]);
+
+  useEffect(() => {
+    if (!treeMode || !activeTag) {
+      return;
+    }
+
+    setExpandedTagPaths((current) => {
+      const next = new Set([...current, ...getParentTagPaths(activeTag)]);
+      return next.size === current.size ? current : next;
+    });
+  }, [activeTag, treeMode]);
 
   if (tags.length === 0) {
     return null;
@@ -79,6 +117,18 @@ const TagsSection = ({ tagCount, onSelect }: Props) => {
       addFilter({ factor: "tagSearch", value: tag });
     }
     onSelect?.();
+  };
+
+  const handleToggleBranch = (tag: string) => {
+    setExpandedTagPaths((current) => {
+      const next = new Set(current);
+      if (next.has(tag)) {
+        next.delete(tag);
+      } else {
+        next.add(tag);
+      }
+      return next;
+    });
   };
 
   return (
@@ -119,7 +169,13 @@ const TagsSection = ({ tagCount, onSelect }: Props) => {
         </span>
       </SidebarSectionHeader>
       {treeMode ? (
-        <TagTree tagAmounts={tags} activeTag={activeTag} onTagClick={handleTagClick} />
+        <TagTree
+          tagAmounts={tags}
+          activeTag={activeTag}
+          expandedTagPaths={expandedTagPaths}
+          onTagClick={handleTagClick}
+          onToggleBranch={handleToggleBranch}
+        />
       ) : (
         <div className="space-y-px">
           {tags.map(([tag, amount]) => (
