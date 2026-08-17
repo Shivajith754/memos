@@ -62,3 +62,14 @@ describe("exact tag keys", () => {
     expect(findTagMetadata("toString", setting)).toBe(metadata);
   });
 });
+
+describe("tag pattern matching", () => {
+  it("includes the prefix tag in trailing wildcard rules", () => {
+    const metadata = { blurContent: true } as UserSetting_TagMetadata;
+    const setting = { tags: { "tagA/.*": metadata } } as UserSetting_TagsSetting;
+
+    expect(findTagMetadata("tagA", setting)).toBe(metadata);
+    expect(findTagMetadata("tagA/child", setting)).toBe(metadata);
+    expect(findTagMetadata("tagAB", setting)).toBeUndefined();
+  });
+});

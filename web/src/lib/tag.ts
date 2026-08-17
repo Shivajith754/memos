@@ -12,13 +12,19 @@ export const mergeTagCounts = (...sources: Array<Record<string, number> | undefi
   return result;
 };
 
+const getPatternForMatching = (pattern: string): string => {
+  // Treat a trailing `/.*`-style wildcard as a hierarchical prefix rule,
+  // including the prefix tag itself.
+  return pattern.endsWith("/.*") ? `${pattern.slice(0, -3)}(?:/.*)?` : pattern;
+};
+
 const getCompiledPattern = (pattern: string): RegExp | null => {
   if (compiledPatternCache.has(pattern)) {
     return compiledPatternCache.get(pattern)!;
   }
   let re: RegExp | null = null;
   try {
-    re = new RegExp(`^(?:${pattern})$`);
+    re = new RegExp(`^(?:${getPatternForMatching(pattern)})$`);
   } catch {
     // Invalid pattern — cache as null so we skip it without retrying.
   }
