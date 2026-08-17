@@ -62,3 +62,14 @@ describe("exact tag keys", () => {
     expect(findTagMetadata("toString", setting)).toBe(metadata);
   });
 });
+
+describe("hierarchical tag rules", () => {
+  it("applies a trailing wildcard rule to the hierarchy root and descendants", () => {
+    const metadata = { blurContent: true } as UserSetting_TagMetadata;
+    const setting = { tags: { "tagA/.*": metadata } } as UserSetting_TagsSetting;
+
+    expect(findTagMetadata("tagA", setting)).toBe(metadata);
+    expect(findTagMetadata("tagA/child", setting)).toBe(metadata);
+    expect(findTagMetadata("tagAB", setting)).toBeUndefined();
+  });
+});

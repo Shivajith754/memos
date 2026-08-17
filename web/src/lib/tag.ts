@@ -18,7 +18,11 @@ const getCompiledPattern = (pattern: string): RegExp | null => {
   }
   let re: RegExp | null = null;
   try {
-    re = new RegExp(`^(?:${pattern})$`);
+    // A trailing `/.*` family pattern also applies to the hierarchy root.
+    // `tagA/.*` therefore matches both `tagA` and descendants such as
+    // `tagA/child`, while other regex patterns retain their normal semantics.
+    const patternWithOptionalRoot = pattern.endsWith("/.*") ? `${pattern.slice(0, -3)}(?:/.*)?` : pattern;
+    re = new RegExp(`^(?:${patternWithOptionalRoot})$`);
   } catch {
     // Invalid pattern — cache as null so we skip it without retrying.
   }
@@ -29,6 +33,7 @@ const getCompiledPattern = (pattern: string): RegExp | null => {
 /**
  * Finds the first matching TagMetadata for a given tag name by treating each
  * key in tagsSetting.tags as an anchored regex pattern (^pattern$).
+ * A trailing /.* family pattern also matches its hierarchy root.
  *
  * Lookup order:
  * 1. Exact key match (O(1) fast path, backward-compatible).
